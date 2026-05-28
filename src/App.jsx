@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { supabase } from "./supabaseClient";
 
 // Deploy-ready Vite version.
 // Required installs: npm install lucide-react framer-motion
@@ -443,30 +444,74 @@ export default function RefreshSchedulingApp() {
   const [formErrors, setFormErrors] = useState({});
   const packages = Object.keys(packageTimes);
 
-  const [jobs, setJobs] = useState(() => loadSavedState("rmr-jobs", [
-    {
-      id: 1,
-      day: "Tuesday",
-      customer: "Example Job",
-      vehicle: "2022 Ford Explorer",
-      address: "",
-      packagePrice: "299.99",
-      addOnPrice: "0",
-      pkg: "Signature Refresh",
-      size: "SUV",
-      addOns: {},
-      phoneAddOns: {},
-      location: "Shop",
-      time: "9:00 AM",
-      tech: "Ben",
-      tech2: "",
-      tech3: "",
-      techCount: 1,
-      mobileBuffer: 0.75,
-      notes: "Example note: customer wants pickup by 4:30.",
-    },
-  ]));
+  const [jobs, setJobs] = useState([]);
+const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+
+React.useEffect(() => {
+  async function loadJobs() {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error loading jobs:", error);
+    } else {
+      const formattedJobs = data.map((row) => row.data);
+      setJobs(formattedJobs);
+    }
+
+    setIsLoadingJobs(false);
+  }
+
+  loadJobs();
+}, []);
   const [form, setForm] = useState(EMPTY_JOB);
+  
+  React.useEffect(() => {
+    const channel = supabase
+      .channel("jobs-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "jobs",
+        },
+        async () => {
+          const { data, error } = await supabase
+            .from("jobs")
+            .select("*")
+            .order("created_at", { ascending: true });
+  
+          if (!error) {
+            setJobs(data.map((row) => row.data));
+          }
+        }
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    async function testSupabase() {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .limit(1);
+  
+      if (error) {
+        console.error("Supabase error:", error);
+      } else {
+        console.log("Supabase connected:", data);
+      }
+    }
+  
+    testSupabase();
+  }, []);
 
   React.useEffect(() => {
     saveState("rmr-jobs", jobs);
@@ -563,7 +608,7 @@ export default function RefreshSchedulingApp() {
     return Object.keys(errors).length === 0;
   }
 
-  function saveJob() {
+  async function saveJob() {
     if (!validateForm()) return;
 
     if (editingJobId) {
@@ -584,16 +629,43 @@ export default function RefreshSchedulingApp() {
       return;
     }
 
-    setJobs((prev) => [
-      ...prev,
-      {
-        ...form,
-        addOns: { ...form.addOns },
-        phoneAddOns: { ...form.phoneAddOns },
-        id: Date.now(),
+    const newJob = {
+      ...form,
+      addOns: { ...form.addOns },
+      phoneAddOns: { ...form.phoneAddOns },
+      id: Date.now(),
+      day: selectedDay,
+    };
+    
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert({
         day: selectedDay,
-      },
-    ]);
+        customer: newJob.customer,
+        vehicle: newJob.vehicle,
+        address: newJob.address,
+        packageprice: newJob.packagePrice,
+        addonprice: newJob.addOnPrice,
+        pkg: newJob.pkg,
+        size: newJob.size,
+        location: newJob.location,
+        time: newJob.time,
+        tech: newJob.tech,
+        tech2: newJob.tech2,
+        tech3: newJob.tech3,
+        techcount: newJob.techCount,
+        notes: newJob.notes,
+        data: newJob,
+      })
+      .select();
+    
+    if (error) {
+      console.error("Error saving job:", error);
+      alert("Job could not be saved. Check console.");
+      return;
+    }
+    
+    setJobs((prev) => [...prev, data[0].data]);
     resetForm();
   }
 

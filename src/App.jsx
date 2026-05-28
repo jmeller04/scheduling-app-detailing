@@ -275,6 +275,10 @@ function getJobTimeRange(job, packageTimes) {
   return { start, end };
 }
 
+function displayExpectedEndTime(job) {
+  return hourToTime(timeToHour(displayTime(job)) + job.calc.clockTime);
+}
+
 function rangesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
 }
@@ -436,6 +440,8 @@ export default function RefreshSchedulingApp() {
   const [selectedDay, setSelectedDay] = useState(() => loadSavedState("rmr-selected-day", "Tuesday"));
   const [packageTimes, setPackageTimes] = useState(() => loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES));
   const [packageEditorOpen, setPackageEditorOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [addJobOpen, setAddJobOpen] = useState(false);
   const [packageDraft, setPackageDraft] = useState(() => clonePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [expectedConditionOpen, setExpectedConditionOpen] = useState(false);
@@ -588,6 +594,7 @@ React.useEffect(() => {
   function resetForm() {
     setForm(EMPTY_JOB);
     setEditingJobId(null);
+    setAddJobOpen(false);
     setExpectedConditionOpen(false);
     setAddOnOpen(false);
     setFormErrors({});
@@ -671,6 +678,7 @@ React.useEffect(() => {
 
   function editJob(job) {
     setSelectedDay(job.day);
+    setAddJobOpen(false);
     setEditingJobId(job.id);
     setForm({ ...EMPTY_JOB, ...job, addOns: { ...job.addOns }, phoneAddOns: { ...job.phoneAddOns } });
     setFormErrors({});
@@ -754,13 +762,17 @@ React.useEffect(() => {
   });
 
   const formPanel = (
-    <Card className={editingJobId ? "fixed left-1/2 top-1/2 z-[80] max-h-[90vh] w-[min(95vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border-blue-200 shadow-2xl" : "rounded-2xl border-blue-100 shadow-sm lg:col-span-2"}>
+    <Card className={editingJobId ? "fixed left-1/2 top-1/2 z-[80] max-h-[90vh] w-[min(95vw,720px)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border-blue-200 shadow-2xl" : "rounded-2xl border-blue-100 shadow-sm"}>
       <CardContent className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-xl font-bold">{editingJobId ? "Edit Job" : "Add Job"}</h2>
-          {editingJobId && (
+          {editingJobId ? (
             <Button variant="outline" onClick={resetForm} className="rounded-2xl">
               Cancel Edit
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" onClick={() => setAddJobOpen(false)} className="rounded-2xl" aria-label="Close add job form">
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -1046,18 +1058,35 @@ React.useEffect(() => {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="sticky top-0 z-30 -mx-4 -mt-4 border-b bg-white/90 px-4 py-3 backdrop-blur md:-mx-8 md:-mt-8 md:px-8">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-            <div className="text-sm font-semibold text-slate-700">Scheduling App Controls</div>
-            <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={clearSavedSchedule} className="rounded-2xl text-rose-700">
-              Clear Saved Jobs
-            </Button>
-            <Button onClick={openPackageEditor} className="rounded-2xl">
-              <Settings className="mr-2 h-4 w-4" /> Edit Package List
-            </Button>
+        <div className={`sticky top-0 z-30 -mx-4 -mt-4 bg-white/90 px-4 backdrop-blur md:-mx-8 md:-mt-8 md:px-8 ${controlsOpen ? "border-b py-3" : "py-1"}`}>
+          {controlsOpen ? (
+            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-slate-700">Scheduling App Controls</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={clearSavedSchedule} className="rounded-2xl text-rose-700">
+                  Clear Saved Jobs
+                </Button>
+                <Button onClick={openPackageEditor} className="rounded-2xl">
+                  <Settings className="mr-2 h-4 w-4" /> Edit Package List
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setControlsOpen(false)} className="rounded-2xl" aria-label="Hide scheduling app controls">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mx-auto flex max-w-7xl justify-end">
+              <button
+                type="button"
+                onClick={() => setControlsOpen(true)}
+                className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Show scheduling app controls"
+                title="Scheduling app controls"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {confirmDelete && (
@@ -1201,27 +1230,37 @@ React.useEffect(() => {
           </Card>
         )}
 
-        {editingJobId && <div className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm" onClick={resetForm} />}
+        {editingJobId && (
+          <>
+            <div className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm" onClick={resetForm} />
+            {formPanel}
+          </>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-5">
-          {formPanel}
+          <div className="space-y-4 lg:col-span-2">
+            <div className="flex flex-wrap gap-2">
+              {DAYS.map((day) => (
+                <Button key={day} variant={selectedDay === day ? "default" : "outline"} onClick={() => setSelectedDay(day)} className={selectedDay === day ? "rounded-2xl bg-slate-950 text-white" : "rounded-2xl bg-white"}>
+                  {day}
+                </Button>
+              ))}
+            </div>
+            {!editingJobId && !addJobOpen && (
+              <Button onClick={() => setAddJobOpen(true)} className="w-full rounded-2xl">
+                <Plus className="mr-2 h-4 w-4" /> Add Job
+              </Button>
+            )}
+            {addJobOpen && !editingJobId && formPanel}
+          </div>
 
           <Card className="rounded-2xl border-slate-200 shadow-sm lg:col-span-3">
             <CardContent className="p-5">
-              <div className="mb-4 space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {DAYS.map((day) => (
-                    <Button key={day} variant={selectedDay === day ? "default" : "outline"} onClick={() => setSelectedDay(day)} className={selectedDay === day ? "rounded-2xl bg-slate-950 text-white" : "rounded-2xl bg-white"}>
-                      {day}
-                    </Button>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold">{selectedDay} Schedule</h2>
-                  <Badge variant="outline" className="rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
-                    {fmt(capacity.safe - totalLabor)} hr remaining
-                  </Badge>
-                </div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold">{selectedDay} Schedule</h2>
+                <Badge variant="outline" className="rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
+                  {fmt(capacity.safe - totalLabor)} hr remaining
+                </Badge>
               </div>
 
               <div className="space-y-3">
@@ -1233,6 +1272,9 @@ React.useEffect(() => {
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="text-lg font-bold">{job.customer || job.pkg}</div>
                           <Badge variant="outline">{displayTime(job)}</Badge>
+                          <span className="text-sm text-slate-500">
+                            Expected end: <strong className="text-slate-800">{displayExpectedEndTime(job)}</strong>
+                          </span>
                         </div>
                         {job.vehicle && <div className="text-sm font-medium text-slate-700">{job.vehicle}</div>}
                         {job.location === "Mobile" && job.address && (

@@ -66,6 +66,7 @@ const TECHS = {
   Anthony: { mobile: true, shop: true, monday: false },
   Matt: { mobile: true, shop: true, monday: true },
   Ben: { mobile: false, shop: true, monday: true },
+  Josh: { mobile: true, shop: true, monday: true, zeroLabor: true },
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -73,39 +74,44 @@ const SIZES = ["Car", "SUV", "Truck/Large SUV"];
 const LOCATIONS = ["Shop", "Mobile"];
 const TIMES = ["9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM"];
 
+function packageSize(min, max, price = "") {
+  return { min, max, price };
+}
+
 const DEFAULT_PACKAGE_TIMES = {
-  "Luxury Refresh": { Car: [4.5, 5], SUV: [5.5, 6], "Truck/Large SUV": [6, 6.5] },
-  "Signature Refresh": { Car: [3.5, 4], SUV: [4, 4.5], "Truck/Large SUV": [4.5, 4.75] },
-  "Spring Special": { Car: [2, 3], SUV: [2, 3], "Truck/Large SUV": [3, 3] },
-  "Interior Deep Clean & Reset": { Car: [4.5, 5], SUV: [5, 5.5], "Truck/Large SUV": [5.5, 6] },
-  "Executive Interior": { Car: [2.5, 3], SUV: [3.5, 4], "Truck/Large SUV": [4.5, 5] },
-  "Premium Interior": { Car: [2, 2.5], SUV: [2.5, 3], "Truck/Large SUV": [3.5, 4] },
-  "Polish and Protect": { Car: [2.5, 3.5], SUV: [3.5, 4.5], "Truck/Large SUV": [4.5, 5.5] },
-  "Wash and Seal": { Car: [1, 1.5], SUV: [1.5, 2], "Truck/Large SUV": [2.5, 3] },
-  Maintenance: { Car: [1, 1], SUV: [1, 1], "Truck/Large SUV": [1, 1] },
+  "Luxury Refresh": { Car: packageSize(4.5, 5), SUV: packageSize(5.5, 6), "Truck/Large SUV": packageSize(6, 6.5) },
+  "Signature Refresh": { Car: packageSize(3.5, 4), SUV: packageSize(4, 4.5), "Truck/Large SUV": packageSize(4.5, 4.75) },
+  "Spring Special": { Car: packageSize(2, 3), SUV: packageSize(2, 3), "Truck/Large SUV": packageSize(3, 3) },
+  "Interior Deep Clean & Reset": { Car: packageSize(4.5, 5), SUV: packageSize(5, 5.5), "Truck/Large SUV": packageSize(5.5, 6) },
+  "Executive Interior": { Car: packageSize(2.5, 3), SUV: packageSize(3.5, 4), "Truck/Large SUV": packageSize(4.5, 5) },
+  "Premium Interior": { Car: packageSize(2, 2.5), SUV: packageSize(2.5, 3), "Truck/Large SUV": packageSize(3.5, 4) },
+  "Polish and Protect": { Car: packageSize(2.5, 3.5), SUV: packageSize(3.5, 4.5), "Truck/Large SUV": packageSize(4.5, 5.5) },
+  "Wash and Seal": { Car: packageSize(1, 1.5), SUV: packageSize(1.5, 2), "Truck/Large SUV": packageSize(2.5, 3) },
+  Maintenance: { Car: packageSize(1, 1), SUV: packageSize(1, 1), "Truck/Large SUV": packageSize(1, 1) },
 };
 
-const CONDITION_ADD_ONS = [
-  { key: "petHair", label: "Pet Hair", defaultHours: 1.5 },
-  { key: "kidsMess", label: "Kids Mess", defaultHours: 1 },
-  { key: "stains", label: "Stains", defaultHours: 1 },
-  { key: "heavyBuildup", label: "Heavy Buildup", defaultHours: 1 },
-  { key: "neglected", label: "Neglected", defaultHours: 2 },
-  { key: "bioConcern", label: "Bio/Extreme Concern", defaultHours: 2.5 },
-];
+const DEFAULT_ADD_ONS = {
+  condition: [
+    { key: "petHair", label: "Pet Hair", defaultHours: 1.5 },
+    { key: "kidsMess", label: "Kids Mess", defaultHours: 1 },
+    { key: "stains", label: "Stains", defaultHours: 1 },
+    { key: "heavyBuildup", label: "Heavy Buildup", defaultHours: 1 },
+    { key: "neglected", label: "Neglected", defaultHours: 2 },
+    { key: "bioConcern", label: "Bio/Extreme Concern", defaultHours: 2.5 },
+  ],
+  phone: [
+    { key: "petHairRemoval", label: "Pet Hair Removal", hours: 1 },
+    { key: "ozoneOdorRemoval", label: "Ozone Odor Removal", hours: 2 / 3 },
+    { key: "seatStainExtraction", label: "Seat Stain Extraction", hours: 0.5 },
+    { key: "carpetStainExtraction", label: "Carpet Stain Extraction", hours: 0.5 },
+    { key: "quickExteriorWash", label: "Quick Exterior Wash", hours: 2 / 3 },
+  ],
+};
 
 const PET_HAIR_LEVELS = [
   { key: "light", label: "Light", hours: 1 / 3 },
   { key: "medium", label: "Medium", hours: 2 / 3 },
   { key: "heavy", label: "Heavy", hours: 1.5 },
-];
-
-const PHONE_ADD_ONS = [
-  { key: "petHairRemoval", label: "Pet Hair Removal", hours: 1 },
-  { key: "ozoneOdorRemoval", label: "Ozone Odor Removal", hours: 2 / 3 },
-  { key: "seatStainExtraction", label: "Seat Stain Extraction", hours: 0.5 },
-  { key: "carpetStainExtraction", label: "Carpet Stain Extraction", hours: 0.5 },
-  { key: "quickExteriorWash", label: "Quick Exterior Wash", hours: 2 / 3 },
 ];
 
 const EMPTY_JOB = {
@@ -151,12 +157,32 @@ function hourToTime(hour) {
   return `${wholeHour}:${minutes} AM`;
 }
 
-function selectedConditionAddOns(addOns = {}) {
-  return CONDITION_ADD_ONS.filter((item) => addOns[item.key]);
+function cloneAddOnsConfig(config) {
+  return JSON.parse(JSON.stringify(config));
 }
 
-function selectedPhoneAddOns(phoneAddOns = {}) {
-  return PHONE_ADD_ONS.filter((item) => phoneAddOns[item.key]);
+function normalizeAddOnsConfig(config) {
+  if (!config?.condition || !config?.phone) return cloneAddOnsConfig(DEFAULT_ADD_ONS);
+  return {
+    condition: config.condition.map((item) => ({
+      key: item.key,
+      label: item.label,
+      defaultHours: Number(item.defaultHours ?? item.hours ?? 0),
+    })),
+    phone: config.phone.map((item) => ({
+      key: item.key,
+      label: item.label,
+      hours: Number(item.hours ?? item.defaultHours ?? 0),
+    })),
+  };
+}
+
+function selectedConditionAddOns(addOns = {}, conditionAddOns = DEFAULT_ADD_ONS.condition) {
+  return conditionAddOns.filter((item) => addOns[item.key]);
+}
+
+function selectedPhoneAddOns(phoneAddOns = {}, phoneAddOnsList = DEFAULT_ADD_ONS.phone) {
+  return phoneAddOnsList.filter((item) => phoneAddOns[item.key]);
 }
 
 function conditionAddOnHours(item, addOns = {}) {
@@ -167,16 +193,16 @@ function conditionAddOnHours(item, addOns = {}) {
   return item.defaultHours;
 }
 
-function conditionBuffer(addOns = {}) {
-  return selectedConditionAddOns(addOns).reduce((sum, item) => sum + conditionAddOnHours(item, addOns), 0);
+function conditionBuffer(addOns = {}, conditionAddOns = DEFAULT_ADD_ONS.condition) {
+  return selectedConditionAddOns(addOns, conditionAddOns).reduce((sum, item) => sum + conditionAddOnHours(item, addOns), 0);
 }
 
-function phoneAddOnBuffer(phoneAddOns = {}) {
-  return selectedPhoneAddOns(phoneAddOns).reduce((sum, item) => sum + item.hours, 0);
+function phoneAddOnBuffer(phoneAddOns = {}, phoneAddOnsList = DEFAULT_ADD_ONS.phone) {
+  return selectedPhoneAddOns(phoneAddOns, phoneAddOnsList).reduce((sum, item) => sum + item.hours, 0);
 }
 
-function addOnLabels(addOns = {}) {
-  const labels = selectedConditionAddOns(addOns).map((item) => {
+function addOnLabels(addOns = {}, conditionAddOns = DEFAULT_ADD_ONS.condition) {
+  const labels = selectedConditionAddOns(addOns, conditionAddOns).map((item) => {
     if (item.key === "petHair") {
       const level = PET_HAIR_LEVELS.find((option) => option.key === addOns.petHairLevel);
       return `Pet Hair${level ? ` (${level.label})` : ""}`;
@@ -186,22 +212,22 @@ function addOnLabels(addOns = {}) {
   return labels.length ? labels.join(", ") : "Average condition";
 }
 
-function phoneAddOnLabels(phoneAddOns = {}) {
-  const labels = selectedPhoneAddOns(phoneAddOns).map((item) => item.label);
+function phoneAddOnLabels(phoneAddOns = {}, phoneAddOnsList = DEFAULT_ADD_ONS.phone) {
+  const labels = selectedPhoneAddOns(phoneAddOns, phoneAddOnsList).map((item) => item.label);
   return labels.length ? labels.join(", ") : "No sellable add-ons";
 }
 
-function combinedAddOnLabels(addOns = {}, phoneAddOns = {}) {
+function combinedAddOnLabels(addOns = {}, phoneAddOns = {}, addOnsConfig = DEFAULT_ADD_ONS) {
   const labels = [];
-  const condition = addOnLabels(addOns);
-  const phone = phoneAddOnLabels(phoneAddOns);
+  const condition = addOnLabels(addOns, addOnsConfig.condition);
+  const phone = phoneAddOnLabels(phoneAddOns, addOnsConfig.phone);
   if (condition !== "Average condition") labels.push(condition);
   if (phone !== "No sellable add-ons") labels.push(phone);
   return labels.length ? labels.join(", ") : "No condition issues or add-ons";
 }
 
-function shouldScheduleEarly(pkg, size, addOns, location) {
-  if (selectedConditionAddOns(addOns).length > 0) return true;
+function shouldScheduleEarly(pkg, size, addOns, location, conditionAddOns = DEFAULT_ADD_ONS.condition) {
+  if (selectedConditionAddOns(addOns, conditionAddOns).length > 0) return true;
   if (["Luxury Refresh", "Interior Deep Clean & Reset"].includes(pkg)) return true;
   if (pkg === "Signature Refresh" && size === "Truck/Large SUV") return true;
   if (pkg === "Executive Interior" && size === "Truck/Large SUV") return true;
@@ -216,15 +242,56 @@ function getCapacity(day, mobileHeavy) {
   return { safe: 20, warning: 18, label: "Normal capacity" };
 }
 
-function calculateJob(job, packageTimes) {
-  const range = packageTimes[job.pkg]?.[job.size] || [0, 0];
+function getPackageHours(packageData, size) {
+  const entry = packageData?.[size];
+  if (!entry) return [0, 0];
+  if (Array.isArray(entry)) return [Number(entry[0] || 0), Number(entry[1] || 0)];
+  return [Number(entry.min || 0), Number(entry.max || 0)];
+}
+
+function getPackagePrice(packageTimes, pkg, size) {
+  const entry = packageTimes[pkg]?.[size];
+  if (!entry || Array.isArray(entry)) return "";
+  if (entry.price === "" || entry.price === null || entry.price === undefined) return "";
+  return String(entry.price);
+}
+
+function normalizePackageTimes(times) {
+  const normalized = {};
+  Object.entries(times || {}).forEach(([pkg, sizes]) => {
+    normalized[pkg] = {};
+    Object.entries(sizes).forEach(([size, data]) => {
+      if (Array.isArray(data)) {
+        normalized[pkg][size] = { min: data[0], max: data[1], price: "" };
+      } else {
+        normalized[pkg][size] = {
+          min: data.min ?? data.hours?.[0] ?? 0,
+          max: data.max ?? data.hours?.[1] ?? 0,
+          price: data.price ?? "",
+        };
+      }
+    });
+  });
+  return normalized;
+}
+
+function countsTowardLaborCapacity(job) {
+  return !TECHS[job.tech]?.zeroLabor;
+}
+
+function capacityLaborForJob(job, calc) {
+  return countsTowardLaborCapacity(job) ? calc.totalLabor : 0;
+}
+
+function calculateJob(job, packageTimes, addOnsConfig = DEFAULT_ADD_ONS) {
+  const range = getPackageHours(packageTimes[job.pkg], job.size);
   const avg = (Number(range[0]) + Number(range[1])) / 2;
-  const buffer = conditionBuffer(job.addOns) + phoneAddOnBuffer(job.phoneAddOns) + (job.location === "Mobile" ? Number(job.mobileBuffer || 0.75) : 0);
+  const buffer = conditionBuffer(job.addOns, addOnsConfig.condition) + phoneAddOnBuffer(job.phoneAddOns, addOnsConfig.phone) + (job.location === "Mobile" ? Number(job.mobileBuffer || 0.75) : 0);
   const totalLabor = avg + buffer;
   const techCount = Number(job.techCount || 1);
   const clockTime = Math.max(1, totalLabor / techCount + (techCount > 1 ? 0.25 : 0));
-  const scheduleEarly = shouldScheduleEarly(job.pkg, job.size, job.addOns, job.location);
-  const needsTwoTechs = totalLabor >= 5 || ["Luxury Refresh", "Interior Deep Clean & Reset"].includes(job.pkg) || selectedConditionAddOns(job.addOns).length > 0;
+  const scheduleEarly = shouldScheduleEarly(job.pkg, job.size, job.addOns, job.location, addOnsConfig.condition);
+  const needsTwoTechs = totalLabor >= 5 || ["Luxury Refresh", "Interior Deep Clean & Reset"].includes(job.pkg) || selectedConditionAddOns(job.addOns, addOnsConfig.condition).length > 0;
   const revenue = Number(job.packagePrice || 0) + Number(job.addOnPrice || 0);
   return { range, avg, buffer, totalLabor, techCount, clockTime, scheduleEarly, needsTwoTechs, revenue };
 }
@@ -244,7 +311,7 @@ function fmtMinutes(hours) {
 }
 
 function clonePackageTimes(times) {
-  return JSON.parse(JSON.stringify(times));
+  return normalizePackageTimes(JSON.parse(JSON.stringify(times)));
 }
 
 function getQualifiedTechNames(job, day) {
@@ -269,9 +336,9 @@ function money(num) {
   return `$${Number(num || 0).toFixed(2)}`;
 }
 
-function getJobTimeRange(job, packageTimes) {
+function getJobTimeRange(job, packageTimes, addOnsConfig = DEFAULT_ADD_ONS) {
   const start = timeToHour(displayTime(job));
-  const end = start + calculateJob(job, packageTimes).clockTime;
+  const end = start + calculateJob(job, packageTimes, addOnsConfig).clockTime;
   return { start, end };
 }
 
@@ -283,13 +350,13 @@ function rangesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
 }
 
-function getBusyTechsDuringJob(job, day, jobsOnDay, packageTimes) {
-  const testRange = getJobTimeRange(job, packageTimes);
+function getBusyTechsDuringJob(job, day, jobsOnDay, packageTimes, addOnsConfig = DEFAULT_ADD_ONS) {
+  const testRange = getJobTimeRange(job, packageTimes, addOnsConfig);
   const busy = new Set();
 
   jobsOnDay.forEach((existing) => {
     if (existing.id === job.id) return;
-    const existingRange = getJobTimeRange(existing, packageTimes);
+    const existingRange = getJobTimeRange(existing, packageTimes, addOnsConfig);
     if (!rangesOverlap(testRange.start, testRange.end, existingRange.start, existingRange.end)) return;
     getEstimatedAssignedTechs(existing, day).forEach((name) => busy.add(name));
   });
@@ -297,8 +364,8 @@ function getBusyTechsDuringJob(job, day, jobsOnDay, packageTimes) {
   return Array.from(busy);
 }
 
-function getAvailableTechsForJob(job, day, jobsOnDay, packageTimes) {
-  const busyTechs = getBusyTechsDuringJob(job, day, jobsOnDay, packageTimes);
+function getAvailableTechsForJob(job, day, jobsOnDay, packageTimes, addOnsConfig = DEFAULT_ADD_ONS) {
+  const busyTechs = getBusyTechsDuringJob(job, day, jobsOnDay, packageTimes, addOnsConfig);
   return Object.entries(TECHS)
     .filter(([name, info]) => {
       if (day === "Monday" && !info.monday) return false;
@@ -309,18 +376,18 @@ function getAvailableTechsForJob(job, day, jobsOnDay, packageTimes) {
     .map(([name]) => name);
 }
 
-function evaluateSlot({ day, time, job, jobs, packageTimes, preferredTech }) {
+function evaluateSlot({ day, time, job, jobs, packageTimes, addOnsConfig, preferredTech }) {
   const jobsOnDay = jobs.filter((j) => j.day === day);
   const testJobForAvailability = { ...job, day, time, techCount: 1 };
-  const availableTechs = getAvailableTechsForJob(testJobForAvailability, day, jobsOnDay, packageTimes);
-  const calcPreview = calculateJob({ ...job, techCount: 1 }, packageTimes);
+  const availableTechs = getAvailableTechsForJob(testJobForAvailability, day, jobsOnDay, packageTimes, addOnsConfig);
+  const calcPreview = calculateJob({ ...job, techCount: 1 }, packageTimes, addOnsConfig);
   const techOptions = availableTechs.map((techName) => {
     const testJob = { ...job, day, time, tech: techName, tech2: "", tech3: "", techCount: 1, id: "test" };
-    const dayJobs = [...jobsOnDay, testJob].map((j) => ({ ...j, calc: calculateJob(j, packageTimes) }));
-    const calc = calculateJob(testJob, packageTimes);
+    const dayJobs = [...jobsOnDay, testJob].map((j) => ({ ...j, calc: calculateJob(j, packageTimes, addOnsConfig) }));
+    const calc = calculateJob(testJob, packageTimes, addOnsConfig);
     const mobileHeavy = dayJobs.some((j) => j.location === "Mobile" && j.calc.totalLabor >= 4.5);
     const capacity = getCapacity(day, mobileHeavy);
-    const totalLabor = dayJobs.reduce((sum, j) => sum + j.calc.totalLabor, 0);
+    const totalLabor = dayJobs.reduce((sum, j) => sum + capacityLaborForJob(j, j.calc), 0);
     const shopJobsAtTime = dayJobs.filter((j) => j.location === "Shop" && displayTime(j) === time).length;
     const mobileJobsAtTime = dayJobs.filter((j) => j.location === "Mobile" && displayTime(j) === time).length;
     const finishHour = timeToHour(time) + calc.clockTime;
@@ -349,25 +416,25 @@ function evaluateSlot({ day, time, job, jobs, packageTimes, preferredTech }) {
 
   if (!techOptions.length) {
     const testJob = { ...job, day, time, tech: preferredTech || "Unassigned", tech2: "", tech3: "", techCount: 1, id: "test" };
-    const calc = calculateJob(testJob, packageTimes);
-    const dayJobs = [...jobsOnDay, testJob].map((j) => ({ ...j, calc: calculateJob(j, packageTimes) }));
+    const calc = calculateJob(testJob, packageTimes, addOnsConfig);
+    const dayJobs = [...jobsOnDay, testJob].map((j) => ({ ...j, calc: calculateJob(j, packageTimes, addOnsConfig) }));
     const mobileHeavy = dayJobs.some((j) => j.location === "Mobile" && j.calc.totalLabor >= 4.5);
     const capacity = getCapacity(day, mobileHeavy);
-    const totalLabor = dayJobs.reduce((sum, j) => sum + j.calc.totalLabor, 0);
+    const totalLabor = dayJobs.reduce((sum, j) => sum + capacityLaborForJob(j, j.calc), 0);
     return { day, time, totalLabor, capacity, issues: ["No available qualified technician at this time."], score: -999, calc, recommendedTech: "", finishHour: timeToHour(time) + calc.clockTime };
   }
 
   return techOptions.sort((a, b) => b.score - a.score)[0];
 }
 
-function findRecommendation(form, jobs, packageTimes) {
-  const calc = calculateJob(form, packageTimes);
+function findRecommendation(form, jobs, packageTimes, addOnsConfig = DEFAULT_ADD_ONS) {
+  const calc = calculateJob(form, packageTimes, addOnsConfig);
   const allowedTimes = calc.scheduleEarly ? ["9:00 AM", "9:30 AM", "10:00 AM"] : TIMES;
   const candidates = [];
 
   DAYS.forEach((day) => {
     allowedTimes.forEach((time) => {
-      candidates.push(evaluateSlot({ day, time, job: form, jobs, packageTimes, preferredTech: form.tech }));
+      candidates.push(evaluateSlot({ day, time, job: form, jobs, packageTimes, addOnsConfig, preferredTech: form.tech }));
     });
   });
 
@@ -383,11 +450,11 @@ function runSelfTests() {
   const quickWash = phoneAddOnBuffer({ quickExteriorWash: true });
   console.assert(Math.round(quickWash * 60) === 40, "Quick Exterior Wash should add 40 minutes");
 
-  const maintenance = calculateJob({ ...EMPTY_JOB, pkg: "Maintenance", size: "SUV", location: "Shop" }, DEFAULT_PACKAGE_TIMES);
+  const maintenance = calculateJob({ ...EMPTY_JOB, pkg: "Maintenance", size: "SUV", location: "Shop" }, DEFAULT_PACKAGE_TIMES, DEFAULT_ADD_ONS);
   console.assert(maintenance.totalLabor === 1, "Maintenance should take 1 hour");
 
   const mondayTechs = getAvailableTechsForJob({ ...EMPTY_JOB, location: "Mobile", pkg: "Maintenance", size: "SUV" }, "Monday", [], DEFAULT_PACKAGE_TIMES);
-  console.assert(!mondayTechs.includes("Anthony") && !mondayTechs.includes("Ben") && mondayTechs.includes("Matt"), "Monday mobile availability should only include Matt");
+  console.assert(!mondayTechs.includes("Anthony") && !mondayTechs.includes("Ben") && mondayTechs.includes("Matt") && mondayTechs.includes("Josh"), "Monday mobile availability should include Matt and Josh");
 
   console.assert(timeToHour("9:30 AM") === 9.5, "9:30 AM should parse to 9.5");
   console.assert(hourToTime(13.5) === "1:30 PM", "13.5 should format to 1:30 PM");
@@ -438,11 +505,14 @@ function saveState(key, value) {
 
 export default function RefreshSchedulingApp() {
   const [selectedDay, setSelectedDay] = useState(() => loadSavedState("rmr-selected-day", "Tuesday"));
-  const [packageTimes, setPackageTimes] = useState(() => loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES));
+  const [packageTimes, setPackageTimes] = useState(() => normalizePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
   const [packageEditorOpen, setPackageEditorOpen] = useState(false);
+  const [addOnsEditorOpen, setAddOnsEditorOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [addJobOpen, setAddJobOpen] = useState(false);
   const [packageDraft, setPackageDraft] = useState(() => clonePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
+  const [addOnsConfig, setAddOnsConfig] = useState(() => normalizeAddOnsConfig(loadSavedState("rmr-add-ons", DEFAULT_ADD_ONS)));
+  const [addOnsDraft, setAddOnsDraft] = useState(() => normalizeAddOnsConfig(loadSavedState("rmr-add-ons", DEFAULT_ADD_ONS)));
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [expectedConditionOpen, setExpectedConditionOpen] = useState(false);
   const [addOnOpen, setAddOnOpen] = useState(false);
@@ -528,22 +598,26 @@ React.useEffect(() => {
   }, [packageTimes]);
 
   React.useEffect(() => {
+    saveState("rmr-add-ons", addOnsConfig);
+  }, [addOnsConfig]);
+
+  React.useEffect(() => {
     saveState("rmr-selected-day", selectedDay);
   }, [selectedDay]);
 
   const visibleJobs = useMemo(() => jobs.filter((j) => j.day === selectedDay), [jobs, selectedDay]);
-  const calced = useMemo(() => visibleJobs.map((j) => ({ ...j, calc: calculateJob(j, packageTimes) })), [visibleJobs, packageTimes]);
+  const calced = useMemo(() => visibleJobs.map((j) => ({ ...j, calc: calculateJob(j, packageTimes, addOnsConfig) })), [visibleJobs, packageTimes, addOnsConfig]);
   const mobileHeavy = calced.some((j) => j.location === "Mobile" && j.calc.totalLabor >= 4.5);
   const capacity = getCapacity(selectedDay, mobileHeavy);
-  const totalLabor = calced.reduce((sum, j) => sum + j.calc.totalLabor, 0);
+  const totalLabor = calced.reduce((sum, j) => sum + capacityLaborForJob(j, j.calc), 0);
   const totalRevenue = calced.reduce((sum, j) => sum + j.calc.revenue, 0);
   const mobileJobs = calced.filter((j) => j.location === "Mobile").length;
   const shopJobsAtNine = calced.filter((j) => j.location === "Shop" && displayTime(j) === "9:00 AM").length;
-  const formCalc = calculateJob(form, packageTimes);
+  const formCalc = calculateJob(form, packageTimes, addOnsConfig);
   const canRecommend = Boolean(form.pkg && form.size && form.location);
   const recommendation = useMemo(
-    () => (canRecommend ? findRecommendation(form, jobs.filter((j) => j.id !== editingJobId), packageTimes) : null),
-    [canRecommend, form, jobs, packageTimes, editingJobId]
+    () => (canRecommend ? findRecommendation(form, jobs.filter((j) => j.id !== editingJobId), packageTimes, addOnsConfig) : null),
+    [canRecommend, form, jobs, packageTimes, addOnsConfig, editingJobId]
   );
 
   function updateForm(patch) {
@@ -696,21 +770,118 @@ React.useEffect(() => {
   }
 
   function savePackageEditor() {
-    setPackageTimes(clonePackageTimes(packageDraft));
-    const draftPackages = Object.keys(packageDraft);
-    if (!draftPackages.includes(form.pkg)) updateForm({ pkg: "" });
+    const saved = clonePackageTimes(packageDraft);
+    setPackageTimes(saved);
+    const draftPackages = Object.keys(saved);
+    if (!draftPackages.includes(form.pkg)) {
+      updateForm({ pkg: "" });
+    } else if (form.pkg && form.size) {
+      const price = getPackagePrice(saved, form.pkg, form.size);
+      if (price !== "") updateForm({ packagePrice: price });
+    }
     setPackageEditorOpen(false);
   }
 
-  function updatePackageTime(pkg, size, index, value) {
-    const cleanValue = value === "" ? "" : Number(value);
+  function updatePackageField(pkg, size, field, value) {
+    const cleanValue = value === "" ? "" : field === "price" ? value : Number(value);
     setPackageDraft((prev) => ({
       ...prev,
       [pkg]: {
         ...prev[pkg],
-        [size]: prev[pkg][size].map((current, i) => (i === index ? cleanValue : current)),
+        [size]: {
+          ...prev[pkg][size],
+          [field]: cleanValue,
+        },
       },
     }));
+  }
+
+  function applyCatalogPrice(pkg, size) {
+    const price = getPackagePrice(packageTimes, pkg, size);
+    return price !== "" ? { packagePrice: price } : {};
+  }
+
+  function openAddOnsEditor() {
+    setAddOnsDraft(cloneAddOnsConfig(addOnsConfig));
+    setAddOnsEditorOpen(true);
+  }
+
+  function saveAddOnsEditor() {
+    const saved = normalizeAddOnsConfig(cloneAddOnsConfig(addOnsDraft));
+    setAddOnsConfig(saved);
+    const conditionKeys = new Set(saved.condition.map((item) => item.key));
+    const phoneKeys = new Set(saved.phone.map((item) => item.key));
+    setForm((prev) => ({
+      ...prev,
+      addOns: Object.fromEntries(Object.entries(prev.addOns || {}).filter(([key]) => conditionKeys.has(key) || key === "petHairLevel")),
+      phoneAddOns: Object.fromEntries(Object.entries(prev.phoneAddOns || {}).filter(([key]) => phoneKeys.has(key))),
+    }));
+    setAddOnsEditorOpen(false);
+  }
+
+  function updateConditionAddOn(index, field, value) {
+    const cleanValue = value === "" ? "" : field === "label" ? value : Number(value);
+    setAddOnsDraft((prev) => ({
+      ...prev,
+      condition: prev.condition.map((item, i) => (i === index ? { ...item, [field]: cleanValue } : item)),
+    }));
+  }
+
+  function updatePhoneAddOn(index, field, value) {
+    const cleanValue = value === "" ? "" : field === "label" ? value : Number(value);
+    setAddOnsDraft((prev) => ({
+      ...prev,
+      phone: prev.phone.map((item, i) => (i === index ? { ...item, [field]: cleanValue } : item)),
+    }));
+  }
+
+  function makeAddOnKey(label, existingKeys) {
+    let base = label.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 30) || "addon";
+    let key = base;
+    let count = 2;
+    while (existingKeys.includes(key)) {
+      key = `${base}${count}`;
+      count += 1;
+    }
+    return key;
+  }
+
+  function addConditionAddOn() {
+    setAddOnsDraft((prev) => {
+      const label = "New Condition";
+      const key = makeAddOnKey(label, prev.condition.map((item) => item.key));
+      return {
+        ...prev,
+        condition: [...prev.condition, { key, label, defaultHours: 1 }],
+      };
+    });
+  }
+
+  function addPhoneAddOn() {
+    setAddOnsDraft((prev) => {
+      const label = "New Add-On";
+      const key = makeAddOnKey(label, prev.phone.map((item) => item.key));
+      return {
+        ...prev,
+        phone: [...prev.phone, { key, label, hours: 0.5 }],
+      };
+    });
+  }
+
+  function deleteConditionAddOn(key) {
+    setAddOnsDraft((prev) => ({
+      ...prev,
+      condition: prev.condition.filter((item) => item.key !== key),
+    }));
+    setConfirmDelete(null);
+  }
+
+  function deletePhoneAddOn(key) {
+    setAddOnsDraft((prev) => ({
+      ...prev,
+      phone: prev.phone.filter((item) => item.key !== key),
+    }));
+    setConfirmDelete(null);
   }
 
   function addPackage() {
@@ -723,7 +894,11 @@ React.useEffect(() => {
     }
     setPackageDraft((prev) => ({
       ...prev,
-      [name]: { Car: [1, 1.5], SUV: [1.5, 2], "Truck/Large SUV": [2, 3] },
+      [name]: {
+        Car: packageSize(1, 1.5),
+        SUV: packageSize(1.5, 2),
+        "Truck/Large SUV": packageSize(2, 3),
+      },
     }));
   }
 
@@ -787,7 +962,11 @@ React.useEffect(() => {
           <FieldError message={formErrors.vehicle} />
 
           <label className="text-sm font-medium">Package</label>
-          <select className={formErrors.pkg ? "rounded-2xl border border-rose-400 bg-white p-2" : "rounded-2xl border bg-white p-2"} value={form.pkg} onChange={(e) => updateForm({ pkg: e.target.value })}>
+          <select
+            className={formErrors.pkg ? "rounded-2xl border border-rose-400 bg-white p-2" : "rounded-2xl border bg-white p-2"}
+            value={form.pkg}
+            onChange={(e) => updateForm({ pkg: e.target.value, ...applyCatalogPrice(e.target.value, form.size) })}
+          >
             <SelectPlaceholder>Select package</SelectPlaceholder>
             {packages.map((p) => (
               <option key={p} value={p}>
@@ -805,7 +984,11 @@ React.useEffect(() => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="text-sm font-medium">Vehicle Size</label>
-              <select className={formErrors.size ? "w-full rounded-2xl border border-rose-400 bg-white p-2" : "w-full rounded-2xl border bg-white p-2"} value={form.size} onChange={(e) => updateForm({ size: e.target.value })}>
+              <select
+                className={formErrors.size ? "w-full rounded-2xl border border-rose-400 bg-white p-2" : "w-full rounded-2xl border bg-white p-2"}
+                value={form.size}
+                onChange={(e) => updateForm({ size: e.target.value, ...applyCatalogPrice(form.pkg, e.target.value) })}
+              >
                 <SelectPlaceholder>Select vehicle size</SelectPlaceholder>
                 {SIZES.map((s) => (
                   <option key={s} value={s}>
@@ -847,12 +1030,12 @@ React.useEffect(() => {
             </div>
             <div className="relative">
               <Button type="button" variant="outline" onClick={() => setExpectedConditionOpen(!expectedConditionOpen)} className="w-full justify-between rounded-2xl">
-                <span>{addOnLabels(form.addOns)}</span>
+                <span>{addOnLabels(form.addOns, addOnsConfig.condition)}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
               {expectedConditionOpen && (
                 <div className="absolute z-20 mt-2 w-full rounded-2xl border bg-white p-2 shadow-lg">
-                  {CONDITION_ADD_ONS.map((item) => {
+                  {addOnsConfig.condition.map((item) => {
                     const active = Boolean(form.addOns?.[item.key]);
                     const hours = conditionAddOnHours(item, form.addOns);
                     return (
@@ -890,12 +1073,12 @@ React.useEffect(() => {
             </div>
             <div className="relative">
               <Button type="button" variant="outline" onClick={() => setAddOnOpen(!addOnOpen)} className="w-full justify-between rounded-2xl">
-                <span>{phoneAddOnLabels(form.phoneAddOns)}</span>
+                <span>{phoneAddOnLabels(form.phoneAddOns, addOnsConfig.phone)}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
               {addOnOpen && (
                 <div className="absolute z-20 mt-2 w-full rounded-2xl border bg-white p-2 shadow-lg">
-                  {PHONE_ADD_ONS.map((item) => (
+                  {addOnsConfig.phone.map((item) => (
                     <button key={item.key} type="button" onClick={() => togglePhoneAddOn(item.key)} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-slate-100">
                       <span>{item.label}</span>
                       <span className="text-slate-500">+{fmtMinutes(item.hours)}</span>
@@ -905,7 +1088,7 @@ React.useEffect(() => {
                 </div>
               )}
             </div>
-            {selectedPhoneAddOns(form.phoneAddOns).length > 0 && (
+            {selectedPhoneAddOns(form.phoneAddOns, addOnsConfig.phone).length > 0 && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Add-on Total ($)</label>
                 <Input type="number" min="0" step="0.01" value={form.addOnPrice} onChange={(e) => updateForm({ addOnPrice: e.target.value })} placeholder="Example: 75" className="rounded-2xl" />
@@ -1010,7 +1193,10 @@ React.useEffect(() => {
 
               Base time: {formCalc.range[0]} to {formCalc.range[1]} hr
               <br />
-              Condition / add-ons: {combinedAddOnLabels(form.addOns, form.phoneAddOns)} {conditionBuffer(form.addOns) + phoneAddOnBuffer(form.phoneAddOns) > 0 ? `(+${fmtMinutes(conditionBuffer(form.addOns) + phoneAddOnBuffer(form.phoneAddOns))})` : ""}
+              Condition / add-ons: {combinedAddOnLabels(form.addOns, form.phoneAddOns, addOnsConfig)}{" "}
+              {conditionBuffer(form.addOns, addOnsConfig.condition) + phoneAddOnBuffer(form.phoneAddOns, addOnsConfig.phone) > 0
+                ? `(+${fmtMinutes(conditionBuffer(form.addOns, addOnsConfig.condition) + phoneAddOnBuffer(form.phoneAddOns, addOnsConfig.phone))})`
+                : ""}
               <br />
               Estimated labor: <strong>{fmt(formCalc.totalLabor)} hr</strong>
               <br />
@@ -1069,6 +1255,9 @@ React.useEffect(() => {
                 <Button onClick={openPackageEditor} className="rounded-2xl">
                   <Settings className="mr-2 h-4 w-4" /> Edit Package List
                 </Button>
+                <Button variant="outline" onClick={openAddOnsEditor} className="rounded-2xl">
+                  <Settings className="mr-2 h-4 w-4" /> Edit Add-Ons List
+                </Button>
                 <Button variant="ghost" size="icon" onClick={() => setControlsOpen(false)} className="rounded-2xl" aria-label="Hide scheduling app controls">
                   <X className="h-4 w-4" />
                 </Button>
@@ -1100,9 +1289,98 @@ React.useEffect(() => {
                 <Button variant="outline" onClick={() => setConfirmDelete(null)} className="rounded-2xl">
                   Cancel
                 </Button>
-                <Button onClick={() => (confirmDelete.type === "package" ? deletePackage(confirmDelete.name) : removeJob(confirmDelete.id))} className="rounded-2xl bg-rose-600 hover:bg-rose-700">
+                <Button
+                  onClick={() => {
+                    if (confirmDelete.type === "package") deletePackage(confirmDelete.name);
+                    else if (confirmDelete.type === "conditionAddon") deleteConditionAddOn(confirmDelete.key);
+                    else if (confirmDelete.type === "phoneAddon") deletePhoneAddOn(confirmDelete.key);
+                    else removeJob(confirmDelete.id);
+                  }}
+                  className="rounded-2xl bg-rose-600 hover:bg-rose-700"
+                >
                   Delete
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {addOnsEditorOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/40 p-4">
+            <div className="mx-auto max-w-5xl rounded-3xl bg-white p-5 shadow-2xl">
+              <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-950">Edit Add-Ons List</h2>
+                  <p className="text-sm text-slate-500">Manage expected condition extenders and rep-sold add-ons. Hours feed the scheduling calculator.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={saveAddOnsEditor} className="rounded-2xl">
+                    <Save className="mr-2 h-4 w-4" /> Save
+                  </Button>
+                  <Button variant="ghost" onClick={() => setAddOnsEditorOpen(false)} className="rounded-2xl">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                  <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-950">Expected Condition</h3>
+                      <p className="text-sm text-slate-500">Time extenders for below-average vehicle condition (not sold by rep).</p>
+                    </div>
+                    <Button variant="outline" onClick={addConditionAddOn} className="rounded-2xl">
+                      <Plus className="mr-2 h-4 w-4" /> Add Condition
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {addOnsDraft.condition.map((item, index) => (
+                      <div key={item.key} className="grid gap-3 rounded-2xl bg-white p-3 shadow-sm md:grid-cols-[1fr_140px_auto] md:items-end">
+                        <div>
+                          <label className="text-xs text-slate-500">Label</label>
+                          <Input value={item.label} onChange={(e) => updateConditionAddOn(index, "label", e.target.value)} className="rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-500">Default hours</label>
+                          <Input type="number" step="0.25" value={item.defaultHours} onChange={(e) => updateConditionAddOn(index, "defaultHours", e.target.value)} className="rounded-xl" />
+                        </div>
+                        <Button variant="ghost" onClick={() => setConfirmDelete({ type: "conditionAddon", key: item.key, name: item.label })} className="rounded-2xl text-slate-500 hover:text-rose-600">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                  <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-950">Rep-Sold Add-Ons</h3>
+                      <p className="text-sm text-slate-500">Services sold over the phone that add job time.</p>
+                    </div>
+                    <Button variant="outline" onClick={addPhoneAddOn} className="rounded-2xl">
+                      <Plus className="mr-2 h-4 w-4" /> Add Add-On
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {addOnsDraft.phone.map((item, index) => (
+                      <div key={item.key} className="grid gap-3 rounded-2xl bg-white p-3 shadow-sm md:grid-cols-[1fr_140px_auto] md:items-end">
+                        <div>
+                          <label className="text-xs text-slate-500">Label</label>
+                          <Input value={item.label} onChange={(e) => updatePhoneAddOn(index, "label", e.target.value)} className="rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-500">Hours</label>
+                          <Input type="number" step="0.25" value={item.hours} onChange={(e) => updatePhoneAddOn(index, "hours", e.target.value)} className="rounded-xl" />
+                        </div>
+                        <Button variant="ghost" onClick={() => setConfirmDelete({ type: "phoneAddon", key: item.key, name: item.label })} className="rounded-2xl text-slate-500 hover:text-rose-600">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1114,7 +1392,7 @@ React.useEffect(() => {
               <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-950">Edit Package List</h2>
-                  <p className="text-sm text-slate-500">Update package names and estimated time ranges. These times power the scheduling calculator.</p>
+                  <p className="text-sm text-slate-500">Update package names, estimated time ranges, and default prices by vehicle type. Times power the scheduling calculator; prices auto-fill when adding a job.</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={addPackage} className="rounded-2xl">
@@ -1145,11 +1423,15 @@ React.useEffect(() => {
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="text-xs text-slate-500">Min hrs</label>
-                              <Input type="number" step="0.25" value={values[size][0]} onChange={(e) => updatePackageTime(pkg, size, 0, e.target.value)} className="rounded-xl" />
+                              <Input type="number" step="0.25" value={values[size].min} onChange={(e) => updatePackageField(pkg, size, "min", e.target.value)} className="rounded-xl" />
                             </div>
                             <div>
                               <label className="text-xs text-slate-500">Max hrs</label>
-                              <Input type="number" step="0.25" value={values[size][1]} onChange={(e) => updatePackageTime(pkg, size, 1, e.target.value)} className="rounded-xl" />
+                              <Input type="number" step="0.25" value={values[size].max} onChange={(e) => updatePackageField(pkg, size, "max", e.target.value)} className="rounded-xl" />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="text-xs text-slate-500">Price ($)</label>
+                              <Input type="number" min="0" step="0.01" value={values[size].price} onChange={(e) => updatePackageField(pkg, size, "price", e.target.value)} className="rounded-xl" placeholder="0.00" />
                             </div>
                           </div>
                         </div>
@@ -1283,14 +1565,16 @@ React.useEffect(() => {
                           </div>
                         )}
                         <div className="text-sm text-slate-600">
-                          {job.pkg} • {job.size} • {combinedAddOnLabels(job.addOns, job.phoneAddOns)} • {job.location}
+                          {job.pkg} • {job.size} • {combinedAddOnLabels(job.addOns, job.phoneAddOns, addOnsConfig)} • {job.location}
                         </div>
                         <div className="flex flex-wrap gap-2 text-sm text-slate-700">
                           <span className="rounded-full bg-slate-100 px-3 py-1">Techs: {getEstimatedAssignedTechs(job, selectedDay).join(", ") || job.tech}</span>
                           <span className="rounded-full bg-slate-100 px-3 py-1">
                             {job.calc.techCount} tech{job.calc.techCount > 1 ? "s" : ""}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1">Labor: {fmt(job.calc.totalLabor)} hr</span>
+                          <span className="rounded-full bg-slate-100 px-3 py-1">
+                            Labor: {fmt(job.calc.totalLabor)} hr{!countsTowardLaborCapacity(job) ? " (0 capacity)" : ""}
+                          </span>
                           <span className="rounded-full bg-slate-100 px-3 py-1">Clock: {fmt(job.calc.clockTime)} hr</span>
                           <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-800">Revenue: {money(job.calc.revenue)}</span>
                         </div>

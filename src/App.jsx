@@ -66,7 +66,7 @@ const TECHS = {
   Anthony: { mobile: true, shop: true, monday: false },
   Matt: { mobile: true, shop: true, monday: true },
   Ben: { mobile: false, shop: true, monday: true },
-  Josh: { mobile: true, shop: true, monday: true, zeroLabor: true },
+  Josh: { mobile: true, shop: true, monday: true, zeroLabor: true, excludeFromRecommendations: true },
 };
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -376,10 +376,15 @@ function getAvailableTechsForJob(job, day, jobsOnDay, packageTimes, addOnsConfig
     .map(([name]) => name);
 }
 
+function getRecommendableTechsForJob(job, day, jobsOnDay, packageTimes, addOnsConfig = DEFAULT_ADD_ONS) {
+  return getAvailableTechsForJob(job, day, jobsOnDay, packageTimes, addOnsConfig).filter((name) => !TECHS[name]?.excludeFromRecommendations);
+}
+
 function evaluateSlot({ day, time, job, jobs, packageTimes, addOnsConfig, preferredTech }) {
   const jobsOnDay = jobs.filter((j) => j.day === day);
   const testJobForAvailability = { ...job, day, time, techCount: 1 };
-  const availableTechs = getAvailableTechsForJob(testJobForAvailability, day, jobsOnDay, packageTimes, addOnsConfig);
+  const availableTechs = getRecommendableTechsForJob(testJobForAvailability, day, jobsOnDay, packageTimes, addOnsConfig);
+  const preferredTechForScoring = TECHS[preferredTech]?.excludeFromRecommendations ? "" : preferredTech;
   const calcPreview = calculateJob({ ...job, techCount: 1 }, packageTimes, addOnsConfig);
   const techOptions = availableTechs.map((techName) => {
     const testJob = { ...job, day, time, tech: techName, tech2: "", tech3: "", techCount: 1, id: "test" };
@@ -409,7 +414,7 @@ function evaluateSlot({ day, time, job, jobs, packageTimes, addOnsConfig, prefer
     if (calc.scheduleEarly && time === "9:00 AM") score += 20;
     if (!calc.scheduleEarly && timeToHour(time) >= 12 && calc.clockTime <= 3) score += 8;
     if (day === "Monday") score -= 5;
-    if (techName === preferredTech) score += 4;
+    if (techName === preferredTechForScoring) score += 4;
 
     return { techName, day, time, totalLabor, capacity, issues, score, calc, recommendedTech: techName, finishHour };
   });
@@ -510,6 +515,7 @@ export default function RefreshSchedulingApp() {
   const [addOnsEditorOpen, setAddOnsEditorOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [addJobOpen, setAddJobOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("scheduling");
   const [packageDraft, setPackageDraft] = useState(() => clonePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
   const [addOnsConfig, setAddOnsConfig] = useState(() => normalizeAddOnsConfig(loadSavedState("rmr-add-ons", DEFAULT_ADD_ONS)));
   const [addOnsDraft, setAddOnsDraft] = useState(() => normalizeAddOnsConfig(loadSavedState("rmr-add-ons", DEFAULT_ADD_ONS)));
@@ -1444,11 +1450,12 @@ React.useEffect(() => {
           </div>
         )}
 
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
           <div>
-            <div className="text-sm font-medium text-slate-500">Refresh My Ride</div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Scheduling Capacity Planner</h1>
-            <p className="mt-2 max-w-3xl text-slate-600">Use this before booking a job in Urable. It estimates labor hours, recommends a day, time, and technician, checks shop/mobile limits, and warns when the day is overloaded.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950">Refresh My Ride Operations Dashboard</h1>
+            <p className="mt-2 max-w-3xl text-slate-600">
+              Plan shop and mobile capacity before booking in Urable. Track booked labor and revenue, review schedule warnings, and build the week&apos;s schedule with recommended day, time, and technician slots.
+            </p>
           </div>
         </motion.div>
 
@@ -1491,118 +1498,148 @@ React.useEffect(() => {
           </Card>
         </div>
 
-        {warnings.length > 0 ? (
-          <Card className="rounded-2xl border-amber-200 bg-amber-50 shadow-sm">
-            <CardContent className="p-5">
-              <div className="mb-3 flex items-center gap-2 font-semibold text-amber-900">
-                <AlertTriangle className="h-5 w-5" /> Schedule Warnings
-              </div>
-              <div className="space-y-2 text-sm text-amber-900">
-                {warnings.map((w, i) => (
-                  <div key={i}>• {w}</div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="rounded-2xl border-emerald-200 bg-emerald-50 shadow-sm">
-            <CardContent className="flex items-center gap-2 p-5 font-semibold text-emerald-900">
-              <CheckCircle2 className="h-5 w-5" /> Schedule looks safe based on current rules.
-            </CardContent>
-          </Card>
-        )}
-
-        {editingJobId && (
-          <>
-            <div className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm" onClick={resetForm} />
-            {formPanel}
-          </>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-5">
-          <div className="space-y-4 lg:col-span-2">
-            <div className="flex flex-wrap gap-2">
-              {DAYS.map((day) => (
-                <Button key={day} variant={selectedDay === day ? "default" : "outline"} onClick={() => setSelectedDay(day)} className={selectedDay === day ? "rounded-2xl bg-slate-950 text-white" : "rounded-2xl bg-white"}>
-                  {day}
-                </Button>
-              ))}
-            </div>
-            {!editingJobId && !addJobOpen && (
-              <Button onClick={() => setAddJobOpen(true)} className="w-full rounded-2xl">
-                <Plus className="mr-2 h-4 w-4" /> Add Job
-              </Button>
-            )}
-            {addJobOpen && !editingJobId && formPanel}
+        <div className="border-b border-slate-200">
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("scheduling")}
+              className={`rounded-t-2xl px-5 py-2.5 text-sm font-semibold transition-colors ${
+                activeTab === "scheduling" ? "border border-b-0 border-slate-200 bg-white text-slate-950" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              }`}
+            >
+              Scheduling
+            </button>
           </div>
-
-          <Card className="rounded-2xl border-slate-200 shadow-sm lg:col-span-3">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold">{selectedDay} Schedule</h2>
-                <Badge variant="outline" className="rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
-                  {fmt(capacity.safe - totalLabor)} hr remaining
-                </Badge>
-              </div>
-
-              <div className="space-y-3">
-                {calced.length === 0 && <div className="rounded-2xl border border-dashed p-8 text-center text-slate-500">No jobs added for this day yet.</div>}
-                {calced.map((job) => (
-                  <motion.div key={job.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-lg font-bold">{job.customer || job.pkg}</div>
-                          <Badge variant="outline">{displayTime(job)}</Badge>
-                          <span className="text-sm text-slate-500">
-                            Expected end: <strong className="text-slate-800">{displayExpectedEndTime(job)}</strong>
-                          </span>
-                        </div>
-                        {job.vehicle && <div className="text-sm font-medium text-slate-700">{job.vehicle}</div>}
-                        {job.location === "Mobile" && job.address && (
-                          <div className="flex items-center gap-1 text-sm text-slate-700">
-                            <MapPin className="h-4 w-4" /> {job.address}
-                          </div>
-                        )}
-                        <div className="text-sm text-slate-600">
-                          {job.pkg} • {job.size} • {combinedAddOnLabels(job.addOns, job.phoneAddOns, addOnsConfig)} • {job.location}
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-sm text-slate-700">
-                          <span className="rounded-full bg-slate-100 px-3 py-1">Techs: {getEstimatedAssignedTechs(job, selectedDay).join(", ") || job.tech}</span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1">
-                            {job.calc.techCount} tech{job.calc.techCount > 1 ? "s" : ""}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1">
-                            Labor: {fmt(job.calc.totalLabor)} hr{!countsTowardLaborCapacity(job) ? " (0 capacity)" : ""}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1">Clock: {fmt(job.calc.clockTime)} hr</span>
-                          <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-800">Revenue: {money(job.calc.revenue)}</span>
-                        </div>
-                        <div className="text-sm font-medium text-slate-700">
-                          Recommendation: {job.calc.scheduleEarly ? "Schedule early in the day" : "Flexible timing if capacity allows"}
-                          {job.calc.needsTwoTechs ? " • 2 techs suggested if schedule is tight" : ""}
-                        </div>
-                        {job.notes && (
-                          <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
-                            <strong>Notes:</strong> {job.notes}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="icon" onClick={() => editJob(job)} className="rounded-2xl text-slate-600">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setConfirmDelete({ type: "job", id: job.id, name: job.customer || job.pkg })} className="rounded-2xl text-slate-500 hover:text-rose-600">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
+
+        {activeTab === "scheduling" && (
+          <div className="space-y-6 rounded-b-2xl rounded-tr-2xl border border-t-0 border-slate-200 bg-white p-4 md:p-6">
+            {warnings.length > 0 ? (
+              <Card className="rounded-2xl border-amber-200 bg-amber-50 shadow-sm">
+                <CardContent className="p-5">
+                  <div className="mb-3 flex items-center gap-2 font-semibold text-amber-900">
+                    <AlertTriangle className="h-5 w-5" /> Schedule Warnings
+                  </div>
+                  <div className="space-y-2 text-sm text-amber-900">
+                    {warnings.map((w, i) => (
+                      <div key={i}>• {w}</div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="rounded-2xl border-emerald-200 bg-emerald-50 shadow-sm">
+                <CardContent className="flex items-center gap-2 p-5 font-semibold text-emerald-900">
+                  <CheckCircle2 className="h-5 w-5" /> Schedule looks safe based on current rules.
+                </CardContent>
+              </Card>
+            )}
+
+            {editingJobId && (
+              <>
+                <div className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm" onClick={resetForm} />
+                {formPanel}
+              </>
+            )}
+
+            <div className="grid gap-6 lg:grid-cols-5">
+              <div className="space-y-4 lg:col-span-2">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-950">Week Schedule</h2>
+                  <p className="text-sm text-slate-500">Select a day to view and manage jobs.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS.map((day) => {
+                    const dayJobCount = jobs.filter((j) => j.day === day).length;
+                    return (
+                      <Button key={day} variant={selectedDay === day ? "default" : "outline"} onClick={() => setSelectedDay(day)} className={selectedDay === day ? "rounded-2xl bg-slate-950 text-white" : "rounded-2xl bg-white"}>
+                        {day}
+                        {dayJobCount > 0 && (
+                          <span className={`ml-1.5 rounded-full px-1.5 text-xs ${selectedDay === day ? "bg-white/20" : "bg-slate-200 text-slate-700"}`}>
+                            {dayJobCount}
+                          </span>
+                        )}
+                      </Button>
+                    );
+                  })}
+                </div>
+                {!editingJobId && !addJobOpen && (
+                  <Button onClick={() => setAddJobOpen(true)} className="w-full rounded-2xl">
+                    <Plus className="mr-2 h-4 w-4" /> Add Job
+                  </Button>
+                )}
+                {addJobOpen && !editingJobId && formPanel}
+              </div>
+
+              <Card className="rounded-2xl border-slate-200 shadow-sm lg:col-span-3">
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-xl font-bold">{selectedDay} Schedule</h2>
+                    <Badge variant="outline" className="rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
+                      {fmt(capacity.safe - totalLabor)} hr remaining
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-3">
+                    {calced.length === 0 && <div className="rounded-2xl border border-dashed p-8 text-center text-slate-500">No jobs added for this day yet.</div>}
+                    {calced.map((job) => (
+                      <motion.div key={job.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="text-lg font-bold">{job.customer || job.pkg}</div>
+                              <Badge variant="outline">{displayTime(job)}</Badge>
+                              <span className="text-sm text-slate-500">
+                                Expected end: <strong className="text-slate-800">{displayExpectedEndTime(job)}</strong>
+                              </span>
+                            </div>
+                            {job.vehicle && <div className="text-sm font-medium text-slate-700">{job.vehicle}</div>}
+                            {job.location === "Mobile" && job.address && (
+                              <div className="flex items-center gap-1 text-sm text-slate-700">
+                                <MapPin className="h-4 w-4" /> {job.address}
+                              </div>
+                            )}
+                            <div className="text-sm text-slate-600">
+                              {job.pkg} • {job.size} • {combinedAddOnLabels(job.addOns, job.phoneAddOns, addOnsConfig)} • {job.location}
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-sm text-slate-700">
+                              <span className="rounded-full bg-slate-100 px-3 py-1">Techs: {getEstimatedAssignedTechs(job, selectedDay).join(", ") || job.tech}</span>
+                              <span className="rounded-full bg-slate-100 px-3 py-1">
+                                {job.calc.techCount} tech{job.calc.techCount > 1 ? "s" : ""}
+                              </span>
+                              <span className="rounded-full bg-slate-100 px-3 py-1">
+                                Labor: {fmt(job.calc.totalLabor)} hr{!countsTowardLaborCapacity(job) ? " (0 capacity)" : ""}
+                              </span>
+                              <span className="rounded-full bg-slate-100 px-3 py-1">Clock: {fmt(job.calc.clockTime)} hr</span>
+                              <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-800">Revenue: {money(job.calc.revenue)}</span>
+                            </div>
+                            <div className="text-sm font-medium text-slate-700">
+                              Recommendation: {job.calc.scheduleEarly ? "Schedule early in the day" : "Flexible timing if capacity allows"}
+                              {job.calc.needsTwoTechs ? " • 2 techs suggested if schedule is tight" : ""}
+                            </div>
+                            {job.notes && (
+                              <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
+                                <strong>Notes:</strong> {job.notes}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="icon" onClick={() => editJob(job)} className="rounded-2xl text-slate-600">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setConfirmDelete({ type: "job", id: job.id, name: job.customer || job.pkg })} className="rounded-2xl text-slate-500 hover:text-rose-600">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

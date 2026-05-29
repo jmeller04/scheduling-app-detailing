@@ -508,15 +508,39 @@ function saveState(key, value) {
   }
 }
 
+const PACKAGE_SETTINGS_KEY = "package_times";
+
+async function fetchPackageTimesFromDb() {
+  const { data, error } = await supabase.from("app_settings").select("data").eq("key", PACKAGE_SETTINGS_KEY).maybeSingle();
+  if (error) throw error;
+  return data?.data ? normalizePackageTimes(data.data) : null;
+}
+
+async function persistPackageTimesToDb(packageTimes) {
+  const normalized = clonePackageTimes(packageTimes);
+  const { error } = await supabase.from("app_settings").upsert(
+    {
+      key: PACKAGE_SETTINGS_KEY,
+      data: normalized,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "key" }
+  );
+  if (error) throw error;
+  return normalized;
+}
+
 export default function RefreshSchedulingApp() {
   const [selectedDay, setSelectedDay] = useState(() => loadSavedState("rmr-selected-day", "Tuesday"));
-  const [packageTimes, setPackageTimes] = useState(() => normalizePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
+  const [packageTimes, setPackageTimes] = useState(() => normalizePackageTimes(DEFAULT_PACKAGE_TIMES));
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true);
+  const [isSavingPackages, setIsSavingPackages] = useState(false);
   const [packageEditorOpen, setPackageEditorOpen] = useState(false);
   const [addOnsEditorOpen, setAddOnsEditorOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [addJobOpen, setAddJobOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("scheduling");
-  const [packageDraft, setPackageDraft] = useState(() => clonePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
+  const [packageDraft, setPackageDraft] = useState(() => clonePackageTimes(DEFAULT_PACKAGE_TIMES));
   const [addOnsConfig, setAddOnsConfig] = useState(() => normalizeAddOnsConfig(loadSavedState("rmr-add-ons", DEFAULT_ADD_ONS)));
   const [addOnsDraft, setAddOnsDraft] = useState(() => normalizeAddOnsConfig(loadSavedState("rmr-add-ons", DEFAULT_ADD_ONS)));
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -548,8 +572,74 @@ React.useEffect(() => {
 
   loadJobs();
 }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadPackages() {
+      try {
+        const remote = await fetchPackageTimesFromDb();
+        if (cancelled) return;
+
+        if (remote) {
+          setPackageTimes(remote);
+          saveState("rmr-package-times", remote);
+        } else {
+          const local = normalizePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES));
+          const seeded = await persistPackageTimesToDb(local);
+          if (!cancelled) {
+            setPackageTimes(seeded);
+            saveState("rmr-package-times", seeded);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading packages:", err);
+        if (!cancelled) {
+          setPackageTimes(normalizePackageTimes(loadSavedState("rmr-package-times", DEFAULT_PACKAGE_TIMES)));
+        }
+      } finally {
+        if (!cancelled) setIsLoadingPackages(false);
+      }
+    }
+
+    loadPackages();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [form, setForm] = useState(EMPTY_JOB);
-  
+
+  React.useEffect(() => {
+    const channel = supabase
+      .channel("packages-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "app_settings",
+          filter: `key=eq.${PACKAGE_SETTINGS_KEY}`,
+        },
+        async () => {
+          try {
+            const remote = await fetchPackageTimesFromDb();
+            if (remote) {
+              setPackageTimes(remote);
+              saveState("rmr-package-times", remote);
+            }
+          } catch (err) {
+            console.error("Error syncing packages:", err);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   React.useEffect(() => {
     const channel = supabase
       .channel("jobs-live")
@@ -598,10 +688,6 @@ React.useEffect(() => {
   React.useEffect(() => {
     saveState("rmr-jobs", jobs);
   }, [jobs]);
-
-  React.useEffect(() => {
-    saveState("rmr-package-times", packageTimes);
-  }, [packageTimes]);
 
   React.useEffect(() => {
     saveState("rmr-add-ons", addOnsConfig);
@@ -775,17 +861,27 @@ React.useEffect(() => {
     setPackageEditorOpen(true);
   }
 
-  function savePackageEditor() {
+  async function savePackageEditor() {
     const saved = clonePackageTimes(packageDraft);
-    setPackageTimes(saved);
-    const draftPackages = Object.keys(saved);
-    if (!draftPackages.includes(form.pkg)) {
-      updateForm({ pkg: "" });
-    } else if (form.pkg && form.size) {
-      const price = getPackagePrice(saved, form.pkg, form.size);
-      if (price !== "") updateForm({ packagePrice: price });
+    setIsSavingPackages(true);
+    try {
+      const persisted = await persistPackageTimesToDb(saved);
+      setPackageTimes(persisted);
+      saveState("rmr-package-times", persisted);
+      const draftPackages = Object.keys(persisted);
+      if (!draftPackages.includes(form.pkg)) {
+        updateForm({ pkg: "" });
+      } else if (form.pkg && form.size) {
+        const price = getPackagePrice(persisted, form.pkg, form.size);
+        if (price !== "") updateForm({ packagePrice: price });
+      }
+      setPackageEditorOpen(false);
+    } catch (err) {
+      console.error("Error saving packages:", err);
+      alert("Package list could not be saved. Run supabase/app_settings.sql in Supabase if this is a new database.");
+    } finally {
+      setIsSavingPackages(false);
     }
-    setPackageEditorOpen(false);
   }
 
   function updatePackageField(pkg, size, field, value) {
@@ -1404,8 +1500,8 @@ React.useEffect(() => {
                   <Button variant="outline" onClick={addPackage} className="rounded-2xl">
                     <Plus className="mr-2 h-4 w-4" /> Add Package
                   </Button>
-                  <Button onClick={savePackageEditor} className="rounded-2xl">
-                    <Save className="mr-2 h-4 w-4" /> Save
+                  <Button onClick={savePackageEditor} disabled={isSavingPackages} className="rounded-2xl">
+                    <Save className="mr-2 h-4 w-4" /> {isSavingPackages ? "Saving..." : "Save"}
                   </Button>
                   <Button variant="ghost" onClick={() => setPackageEditorOpen(false)} className="rounded-2xl">
                     <X className="h-4 w-4" />
@@ -1414,6 +1510,7 @@ React.useEffect(() => {
               </div>
 
               <div className="space-y-4">
+                {isLoadingPackages && <div className="text-sm text-slate-500">Loading package list...</div>}
                 {Object.entries(packageDraft).map(([pkg, values]) => (
                   <div key={pkg} className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                     <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

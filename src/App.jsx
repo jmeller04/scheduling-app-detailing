@@ -530,6 +530,31 @@ async function persistPackageTimesToDb(packageTimes) {
   return normalized;
 }
 
+function formatJobRow(row) {
+  return { ...row.data, dbId: row.id };
+}
+
+function jobToDbRow(job) {
+  return {
+    day: job.day,
+    customer: job.customer,
+    vehicle: job.vehicle,
+    address: job.address,
+    packageprice: job.packagePrice,
+    addonprice: job.addOnPrice,
+    pkg: job.pkg,
+    size: job.size,
+    location: job.location,
+    time: job.time,
+    tech: job.tech,
+    tech2: job.tech2,
+    tech3: job.tech3,
+    techcount: job.techCount,
+    notes: job.notes,
+    data: job,
+  };
+}
+
 export default function RefreshSchedulingApp() {
   const [selectedDay, setSelectedDay] = useState(() => loadSavedState("rmr-selected-day", "Tuesday"));
   const [packageTimes, setPackageTimes] = useState(() => normalizePackageTimes(DEFAULT_PACKAGE_TIMES));
@@ -563,8 +588,7 @@ React.useEffect(() => {
     if (error) {
       console.error("Error loading jobs:", error);
     } else {
-      const formattedJobs = data.map((row) => row.data);
-      setJobs(formattedJobs);
+      setJobs(data.map(formatJobRow));
     }
 
     setIsLoadingJobs(false);
@@ -657,7 +681,7 @@ React.useEffect(() => {
             .order("created_at", { ascending: true });
   
           if (!error) {
-            setJobs(data.map((row) => row.data));
+            setJobs(data.map(formatJobRow));
           }
         }
       )
@@ -750,10 +774,17 @@ React.useEffect(() => {
     }));
   }
 
-  function clearSavedSchedule() {
-    const confirmed = window.confirm("Clear all saved jobs from this browser? This cannot be undone.");
+  async function clearSavedSchedule() {
+    const confirmed = window.confirm("Clear all saved jobs? This permanently deletes them from the database.");
     if (!confirmed) return;
+    const { error } = await supabase.from("jobs").delete().gte("created_at", "1970-01-01");
+    if (error) {
+      console.error("Error clearing jobs:", error);
+      alert("Could not clear jobs. Check console.");
+      return;
+    }
     setJobs([]);
+    saveState("rmr-jobs", []);
     resetForm();
   }
 
@@ -785,19 +816,26 @@ React.useEffect(() => {
     if (!validateForm()) return;
 
     if (editingJobId) {
-      setJobs((prev) =>
-        prev.map((job) =>
-          job.id === editingJobId
-            ? {
-                ...form,
-                addOns: { ...form.addOns },
-                phoneAddOns: { ...form.phoneAddOns },
-                id: editingJobId,
-                day: selectedDay,
-              }
-            : job
-        )
-      );
+      const existing = jobs.find((job) => job.id === editingJobId);
+      const updatedJob = {
+        ...form,
+        addOns: { ...form.addOns },
+        phoneAddOns: { ...form.phoneAddOns },
+        id: editingJobId,
+        day: selectedDay,
+        dbId: existing?.dbId,
+      };
+
+      if (existing?.dbId) {
+        const { error } = await supabase.from("jobs").update(jobToDbRow(updatedJob)).eq("id", existing.dbId);
+        if (error) {
+          console.error("Error updating job:", error);
+          alert("Job could not be saved. Check console.");
+          return;
+        }
+      }
+
+      setJobs((prev) => prev.map((job) => (job.id === editingJobId ? updatedJob : job)));
       resetForm();
       return;
     }
@@ -838,7 +876,7 @@ React.useEffect(() => {
       return;
     }
     
-    setJobs((prev) => [...prev, data[0].data]);
+    setJobs((prev) => [...prev, formatJobRow(data[0])]);
     resetForm();
   }
 
@@ -850,7 +888,23 @@ React.useEffect(() => {
     setFormErrors({});
   }
 
-  function removeJob(id) {
+  async function removeJob(id) {
+    const job = jobs.find((j) => j.id === id);
+    if (job?.dbId) {
+      const { error } = await supabase.from("jobs").delete().eq("id", job.dbId);
+      if (error) {
+        console.error("Error deleting job:", error);
+        alert("Job could not be deleted. Check console.");
+        return;
+      }
+    } else {
+      const { error } = await supabase.from("jobs").delete().eq("data->>id", String(id));
+      if (error) {
+        console.error("Error deleting job:", error);
+        alert("Job could not be deleted. Check console.");
+        return;
+      }
+    }
     setJobs((prev) => prev.filter((j) => j.id !== id));
     if (editingJobId === id) resetForm();
     setConfirmDelete(null);
@@ -1352,7 +1406,7 @@ React.useEffect(() => {
               <div className="text-sm font-semibold text-slate-700">Scheduling App Controls</div>
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" onClick={clearSavedSchedule} className="rounded-2xl text-rose-700">
-                  Clear Saved Jobs
+                  Clear All Jobs
                 </Button>
                 <Button onClick={openPackageEditor} className="rounded-2xl">
                   <Settings className="mr-2 h-4 w-4" /> Edit Package List

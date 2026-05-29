@@ -1,1 +1,181 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Page & surfaces */
+.dark .bg-slate-50 {
+  background-color: rgb(2 6 23);
+}
+
+.dark .bg-white {
+  background-color: rgb(15 23 42);
+}
+
+.dark .bg-white\/90 {
+  background-color: rgb(15 23 42 / 0.9);
+}
+
+.dark .bg-slate-100 {
+  background-color: rgb(30 41 59);
+}
+
+/* Stat & status cards */
+.dark .bg-blue-50 {
+  background-color: rgb(23 37 84);
+}
+
+.dark .bg-emerald-50 {
+  background-color: rgb(6 46 34);
+}
+
+.dark .bg-violet-50 {
+  background-color: rgb(46 16 101);
+}
+
+.dark .bg-orange-50 {
+  background-color: rgb(67 20 7);
+}
+
+.dark .bg-amber-50 {
+  background-color: rgb(69 26 3);
+}
+
+.dark .bg-blue-50\/50,
+.dark .from-blue-50 {
+  --tw-gradient-from: rgb(23 37 84);
+}
+
+/* Editor panels */
+.dark .bg-blue-50.p-4 {
+  background-color: rgb(23 37 84);
+}
+
+.dark .border-blue-100 {
+  border-color: rgb(30 58 138);
+}
+
+.dark .border-blue-200 {
+  border-color: rgb(29 78 216);
+}
+
+.dark .border-emerald-100,
+.dark .border-emerald-200 {
+  border-color: rgb(6 78 59);
+}
+
+.dark .border-amber-100,
+.dark .border-amber-200 {
+  border-color: rgb(146 64 14);
+}
+
+.dark .border-violet-100,
+.dark .border-violet-200 {
+  border-color: rgb(91 33 182);
+}
+
+.dark .border-orange-200 {
+  border-color: rgb(154 52 18);
+}
+
+.dark .border-rose-200,
+.dark .border-rose-400 {
+  border-color: rgb(190 18 60);
+}
+
+/* Text */
+.dark .text-slate-950,
+.dark .text-slate-900 {
+  color: rgb(248 250 252);
+}
+
+.dark .text-slate-800 {
+  color: rgb(226 232 240);
+}
+
+.dark .text-slate-700 {
+  color: rgb(203 213 225);
+}
+
+.dark .text-slate-600 {
+  color: rgb(148 163 184);
+}
+
+.dark .text-slate-500 {
+  color: rgb(100 116 139);
+}
+
+.dark .text-slate-400,
+.dark .text-slate-300 {
+  color: rgb(148 163 184);
+}
+
+.dark .text-blue-950,
+.dark .text-blue-900,
+.dark .text-blue-700 {
+  color: rgb(191 219 254);
+}
+
+.dark .text-emerald-950,
+.dark .text-emerald-900,
+.dark .text-emerald-800,
+.dark .text-emerald-700 {
+  color: rgb(167 243 208);
+}
+
+.dark .text-violet-950,
+.dark .text-violet-900 {
+  color: rgb(221 214 254);
+}
+
+.dark .text-orange-950,
+.dark .text-orange-700 {
+  color: rgb(254 215 170);
+}
+
+.dark .text-amber-900 {
+  color: rgb(253 230 138);
+}
+
+/* Borders */
+.dark .border-slate-200,
+.dark .border-slate-100 {
+  border-color: rgb(51 65 85);
+}
+
+.dark .border-dashed {
+  border-color: rgb(71 85 105);
+}
+
+/* Hovers */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: rgb(51 65 85);
+}
+
+.dark .hover\:bg-violet-100:hover {
+  background-color: rgb(76 29 149);
+}
+
+.dark .hover\:text-slate-600:hover,
+.dark .hover\:text-slate-800:hover {
+  color: rgb(248 250 252);
+}
+
+/* Shadows on job cards stay subtle */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-2xl {
+  --tw-shadow-color: rgb(0 0 0 / 0.4);
+}
+
+/* Form selects */
+.dark select.bg-white,
+.dark select {
+  background-color: rgb(15 23 42);
+  color: rgb(248 250 252);
+  border-color: rgb(51 65 85);
+}

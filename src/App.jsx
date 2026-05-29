@@ -16,9 +16,9 @@ function CardContent({ className = "", children }) {
 function Button({ className = "", variant = "default", size, children, ...props }) {
   const base = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50";
   const variants = {
-    default: "bg-slate-950 text-white hover:bg-slate-800",
-    outline: "border border-slate-200 bg-white hover:bg-slate-50",
-    ghost: "hover:bg-slate-100",
+    default: "bg-slate-950 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200",
+    outline: "border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
+    ghost: "hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800",
   };
   const sizes = {
     icon: "h-10 w-10",
@@ -28,17 +28,17 @@ function Button({ className = "", variant = "default", size, children, ...props 
 }
 
 function Input({ className = "", ...props }) {
-  return <input className={`flex h-10 w-full border border-slate-200 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-slate-300 ${className}`} {...props} />;
+  return <input className={`flex h-10 w-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-slate-600 ${className}`} {...props} />;
 }
 
 function Textarea({ className = "", ...props }) {
-  return <textarea className={`flex w-full border border-slate-200 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-slate-300 ${className}`} {...props} />;
+  return <textarea className={`flex w-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-slate-600 ${className}`} {...props} />;
 }
 
 function Badge({ className = "", variant = "default", children }) {
   const variants = {
     default: "bg-slate-950 text-white",
-    outline: "border border-slate-200 bg-white text-slate-700",
+    outline: "border border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200",
   };
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${variants[variant] || variants.default} ${className}`}>{children}</span>;
 }
@@ -563,6 +563,7 @@ export default function RefreshSchedulingApp() {
   const [packageEditorOpen, setPackageEditorOpen] = useState(false);
   const [addOnsEditorOpen, setAddOnsEditorOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => loadSavedState("rmr-dark-mode", false));
   const [addJobOpen, setAddJobOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("scheduling");
   const [packageDraft, setPackageDraft] = useState(() => clonePackageTimes(DEFAULT_PACKAGE_TIMES));
@@ -720,6 +721,11 @@ React.useEffect(() => {
   React.useEffect(() => {
     saveState("rmr-selected-day", selectedDay);
   }, [selectedDay]);
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    saveState("rmr-dark-mode", darkMode);
+  }, [darkMode]);
 
   const visibleJobs = useMemo(() => jobs.filter((j) => j.day === selectedDay), [jobs, selectedDay]);
   const calced = useMemo(() => visibleJobs.map((j) => ({ ...j, calc: calculateJob(j, packageTimes, addOnsConfig) })), [visibleJobs, packageTimes, addOnsConfig]);
@@ -1398,25 +1404,40 @@ React.useEffect(() => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 text-slate-900 md:p-8 dark:text-slate-100">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className={`sticky top-0 z-30 -mx-4 -mt-4 bg-white/90 px-4 backdrop-blur md:-mx-8 md:-mt-8 md:px-8 ${controlsOpen ? "border-b py-3" : "py-1"}`}>
+        <div className={`sticky top-0 z-30 -mx-4 -mt-4 border-slate-200 bg-white/90 px-4 backdrop-blur md:-mx-8 md:-mt-8 md:px-8 dark:border-slate-700 ${controlsOpen ? "border-b py-3" : "py-1"}`}>
           {controlsOpen ? (
-            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-slate-700">Scheduling App Controls</div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" onClick={clearSavedSchedule} className="rounded-2xl text-rose-700">
-                  Clear All Jobs
-                </Button>
-                <Button onClick={openPackageEditor} className="rounded-2xl">
-                  <Settings className="mr-2 h-4 w-4" /> Edit Package List
-                </Button>
-                <Button variant="outline" onClick={openAddOnsEditor} className="rounded-2xl">
-                  <Settings className="mr-2 h-4 w-4" /> Edit Add-Ons List
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setControlsOpen(false)} className="rounded-2xl" aria-label="Hide scheduling app controls">
-                  <X className="h-4 w-4" />
-                </Button>
+            <div className="mx-auto max-w-7xl space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Settings</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" onClick={clearSavedSchedule} className="rounded-2xl text-rose-700 dark:text-rose-300">
+                    Clear All Jobs
+                  </Button>
+                  <Button onClick={openPackageEditor} className="rounded-2xl">
+                    <Settings className="mr-2 h-4 w-4" /> Edit Package List
+                  </Button>
+                  <Button variant="outline" onClick={openAddOnsEditor} className="rounded-2xl">
+                    <Settings className="mr-2 h-4 w-4" /> Edit Add-Ons List
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setControlsOpen(false)} className="rounded-2xl" aria-label="Hide settings">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-400">Dark mode</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={darkMode}
+                  aria-label="Toggle dark mode"
+                  onClick={() => setDarkMode((on) => !on)}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${darkMode ? "bg-slate-500" : "bg-slate-200 dark:bg-slate-600"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${darkMode ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
               </div>
             </div>
           ) : (
@@ -1424,9 +1445,9 @@ React.useEffect(() => {
               <button
                 type="button"
                 onClick={() => setControlsOpen(true)}
-                className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                aria-label="Show scheduling app controls"
-                title="Scheduling app controls"
+                className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Show settings"
+                title="Settings"
               >
                 <Settings className="h-4 w-4" />
               </button>
@@ -1649,13 +1670,15 @@ React.useEffect(() => {
           </Card>
         </div>
 
-        <div className="border-b border-slate-200">
+        <div className="border-b border-slate-200 dark:border-slate-700">
           <div className="flex gap-1">
             <button
               type="button"
               onClick={() => setActiveTab("scheduling")}
               className={`rounded-t-2xl px-5 py-2.5 text-sm font-semibold transition-colors ${
-                activeTab === "scheduling" ? "border border-b-0 border-slate-200 bg-white text-slate-950" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                activeTab === "scheduling"
+                  ? "border border-b-0 border-slate-200 bg-white text-slate-950 dark:border-slate-700 dark:text-slate-100"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               }`}
             >
               Scheduling
@@ -1664,7 +1687,7 @@ React.useEffect(() => {
         </div>
 
         {activeTab === "scheduling" && (
-          <div className="space-y-6 rounded-b-2xl rounded-tr-2xl border border-t-0 border-slate-200 bg-white p-4 md:p-6">
+          <div className="space-y-6 rounded-b-2xl rounded-tr-2xl border border-t-0 border-slate-200 bg-white p-4 md:p-6 dark:border-slate-700">
             {warnings.length > 0 ? (
               <Card className="rounded-2xl border-amber-200 bg-amber-50 shadow-sm">
                 <CardContent className="p-5">
